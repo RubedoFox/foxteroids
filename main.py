@@ -5,6 +5,7 @@ from player import *
 from asteroid import Asteroid
 from asteroidfield import AsteroidField
 from shot import *
+from powerup import *
 
 
 def main():
@@ -17,6 +18,9 @@ def main():
     asteroids = pygame.sprite.Group()
     shots = pygame.sprite.Group()
 
+    for shot in shots:
+        all_sprites.add(shot)
+    
     Asteroid.containers = (asteroids, updatable, drawable)
     Shot.containers = (shots, updatable, drawable)
     AsteroidField.containers = updatable
@@ -34,10 +38,14 @@ def main():
                 return
 
         updatable.update(dt)
+
+        if not player.is_alive:
+            sys.exit
+
         for asteroid in asteroids:
             if asteroid.collides_with(player):
-                print("Game over!")
-                sys.exit()
+                asteroid.kill()
+                player.lose_life()
 
             for shot in shots:
                 if asteroid.collides_with(shot):
