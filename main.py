@@ -57,6 +57,8 @@ def main():
         for obj in drawable:
             obj.draw(screen)
 
+        player.draw_powerup_ui(screen)
+
         pygame.display.flip()
 
         # limit the framerate to 60 FPS

@@ -5,6 +5,14 @@ from circleshape import CircleShape
 from shot import Shot
 from powerup import *
 
+POWERUP_COLORS = {
+    "invulnerability": (255, 0, 0),   # Red
+    "acceleration":   (0, 255, 0),   # Green
+    "multishot":      (0, 0, 255)    # Blue
+}
+
+POWERUP_ORDER = ["invulnerability", "acceleration", "multishot"]
+
 #Player derived from CircleShape
 class Player(CircleShape):
     def __init__(self, x, y):
@@ -25,8 +33,16 @@ class Player(CircleShape):
         self.powerup_durations = {
             "invulnerability": 0,
             "acceleration": 0,
-            "multishot": 0,
+            "multishot": 0
         }
+
+        self.powerup_inventory = {
+            "invulnerability": 3,
+            "acceleration": 3,
+            "multishot": 3
+        }
+
+        self.powerup_max = 3
 
         self.has_invulnerability = False
         self.has_acceleration = False
@@ -54,7 +70,24 @@ class Player(CircleShape):
         pygame.draw.polygon(screen, "white", self.triangle(), 2)
         if self.grace > 0:
             pygame.draw.circle(screen, (255, 255, 255), self.position, self.radius + 5, 2)
-        
+
+    def draw_powerup_ui(self, screen):
+        dot_radius = 6
+        spacing = 16  # Space between dots
+        margin = 10   # Margin from top-right
+
+        for row, p_type in enumerate(POWERUP_ORDER):
+            count = self.powerup_inventory[p_type]
+            color = POWERUP_COLORS[p_type]
+            for i in range(self.powerup_max):
+                x = SCREEN_WIDTH - margin - (dot_radius * 2 + 4) * (i + 1)
+                y = margin + row * (dot_radius * 2 + 10)
+
+                if i < count:
+                    pygame.draw.circle(screen, color, (x, y), dot_radius)
+                else:
+                    pygame.draw.circle(screen, (100, 100, 100), (x, y), dot_radius, width=1)
+                
 
     def triangle(self):
         forward = pygame.Vector2(0, 1).rotate(self.rotation)
@@ -78,14 +111,17 @@ class Player(CircleShape):
             self.move(dt)
         if keys[pygame.K_SPACE]:
             self.shoot()
-        if keys[pygame.K_i]:
+        if keys[pygame.K_i] and self.powerup_inventory["invulnerability"] > 0 and not self.has_invulnerability:
             self.has_invulnerability = True
+            self.powerup_inventory["invulnerability"] -= 1
             self.powerup_durations["invulnerability"] = 10.0
-        if keys[pygame.K_o]:
+        if keys[pygame.K_o] and self.powerup_inventory["acceleration"] > 0 and not self.has_acceleration:
             self.has_acceleration = True
+            self.powerup_inventory["acceleration"] -= 1
             self.powerup_durations["acceleration"] = 10.0
-        if keys[pygame.K_p]:
+        if keys[pygame.K_p] and self.powerup_inventory["multishot"] > 0 and not self.has_multishot:
             self.has_multishot = True
+            self.powerup_inventory["multishot"] -= 1
             self.powerup_durations["multishot"] = 10.0
 
         if self.grace > 0:
@@ -134,7 +170,11 @@ class Player(CircleShape):
             shot = Shot(self.position.x, self.position.y)
             shot.velocity = pygame.Vector2(0, 1).rotate(self.rotation) * PLAYER_SHOOT_SPEED
             shots.append(shot)
-        
+
+    def add_powerup(self, type_name):
+        if type_name in self.powerup_inventory:
+            if self.powerup_inventory[type_name] < self.powerup_max:
+                self.powerup_inventory[type_name] += 1
 
     def rotate(self, dt):
         self.rotation += PLAYER_TURN_SPEED * dt
