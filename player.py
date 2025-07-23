@@ -10,7 +10,7 @@ class Player(CircleShape):
     def __init__(self, x, y):
         super().__init__(x, y, PLAYER_RADIUS)
         
-        self.color = (255, 255, 255)
+        self.color = (0, 0, 0)
 
         self.rotation = 0
         self.fire_time = 0
@@ -18,9 +18,16 @@ class Player(CircleShape):
         self.lives = 3
         self.is_alive = True
 
+        self.has_grace = False
         self.grace = 0.0
         self.grace_time = 1.5
         
+        self.powerup_durations = {
+            "invulnerability": 0,
+            "acceleration": 0,
+            "multishot": 0,
+        }
+
         self.has_invulnerability = False
         self.has_acceleration = False
         self.has_multishot = False
@@ -28,7 +35,7 @@ class Player(CircleShape):
         self.current_powerup = None
 
     def lose_life(self):
-        if self.has_invulnerability:
+        if self.has_invulnerability or self.has_grace:
             return
         
         self.lives -= 1
@@ -37,15 +44,17 @@ class Player(CircleShape):
             self.is_alive = False
         
         else:
-            self.has_invulnerability = True
-            self.color = (255, 255, 0) #Yellow
+            self.has_grace = True
             self.grace = self.grace_time
             
             self.position = pygame.Vector2(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
 
     def draw(self, screen):
         pygame.draw.polygon(screen, self.color, self.triangle(), 0)
-        pygame.draw.polygon(screen, "white", self.triangle(), 2) 
+        pygame.draw.polygon(screen, "white", self.triangle(), 2)
+        if self.grace > 0:
+            pygame.draw.circle(screen, (255, 255, 255), self.position, self.radius + 5, 2)
+        
 
     def triangle(self):
         forward = pygame.Vector2(0, 1).rotate(self.rotation)
@@ -71,33 +80,42 @@ class Player(CircleShape):
             self.shoot()
         if keys[pygame.K_i]:
             self.has_invulnerability = True
-            self.color = (255, 0, 0) #Red
+            self.powerup_durations["invulnerability"] = 10.0
         if keys[pygame.K_o]:
             self.has_acceleration = True
-            self.color = (0, 255, 0) #Green
+            self.powerup_durations["acceleration"] = 10.0
         if keys[pygame.K_p]:
             self.has_multishot = True
-            self.color = (0, 0, 255) #Blue
-
-        #self.update_powerup()
+            self.powerup_durations["multishot"] = 10.0
 
         if self.grace > 0:
             self.grace -= dt
             if self.grace <= 0:
-                self.has_invulnerability = False
-                self.color = (255, 255, 255)
+                self.has_grace = False
 
-    def update_powerup(self):
-        if self.current_powerup is None or self.current_powerup.is_expired():
-            if self.current_powerup:
-                self.current_powerup.clear(self)
-            self.current_powerup = self.get_random_powerup()
-            self.current_powerup.apply(self)
+        for key in self.powerup_durations:
+            if self.powerup_durations[key] > 0:
+                self.powerup_durations[key] -= dt
+                if self.powerup_durations[key] <= 0:
+                    if key == "invulnerability":
+                        self.has_invulnerability = False
+                    if key == "acceleration":
+                        self.has_acceleration = False
+                    if key == "multishot":
+                        self.has_multishot = False
 
-    def get_random_powerup(self):
-        powerup_name = random.choice(["invulnerability", "speed_boost", "multishot"])
-        return PowerUp(powerup_name, duration=5.0)
+        self.update_powerup_color()
  
+    def update_powerup_color(self):
+        r, g, b = 0, 0, 0
+        if self.has_invulnerability:
+            r = max(r, 255)
+        if self.has_acceleration:
+            g = max(g, 255)
+        if self.has_multishot:
+            b = max(b, 255)
+        self.color = (r, g, b)
+
     def shoot(self):
         if self.fire_time > 0:
             return
