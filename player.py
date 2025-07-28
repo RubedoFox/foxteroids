@@ -38,9 +38,9 @@ class Player(CircleShape):
         }
 
         self.powerup_inventory = {
-            "invulnerability": 3,
-            "acceleration": 3,
-            "multishot": 3
+            "invulnerability": 0,
+            "acceleration": 0,
+            "multishot": 0
         }
 
         self.powerup_max = 3
@@ -188,6 +188,8 @@ class Player(CircleShape):
             return
         self.fire_time = PLAYER_COOLDOWN_TIME
         shots = []
+
+        speed_multiplier = 2 if self.has_acceleration else 1
         
         if self.has_multishot:
             offsets = [20, 0, -20]
@@ -195,11 +197,11 @@ class Player(CircleShape):
             for offset, angle in zip(offsets, angles):
                 pos = self.position + pygame.Vector2(offset, 0).rotate(self.rotation)
                 shot = Shot(pos.x, pos.y, self)
-                shot.velocity = pygame.Vector2(0, 1).rotate(self.rotation + angle) * PLAYER_SHOOT_SPEED
+                shot.velocity = pygame.Vector2(0, 1).rotate(self.rotation + angle) * PLAYER_SHOOT_SPEED * speed_multiplier
                 shots.append(shot)
         else:
             shot = Shot(self.position.x, self.position.y, self)
-            shot.velocity = pygame.Vector2(0, 1).rotate(self.rotation) * PLAYER_SHOOT_SPEED
+            shot.velocity = pygame.Vector2(0, 1).rotate(self.rotation) * PLAYER_SHOOT_SPEED * speed_multiplier
             shots.append(shot)
 
     def add_powerup(self, type_name):

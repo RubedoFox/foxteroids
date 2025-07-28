@@ -12,8 +12,13 @@ from upgradeobject import *
 from upgradeasteroid import *
 from extralifeobject import *
 
-
 def main():
+    while True:
+        should_quit = run_game()
+        if should_quit:
+            break
+
+def run_game():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     clock = pygame.time.Clock()
@@ -53,12 +58,13 @@ def main():
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return
+                pygame.quit()
+                return True
 
         updatable.update(dt)
 
         if not player.is_alive:
-            sys.exit
+            return False
 
         for asteroid in asteroids:
             if asteroid.collides_with(player):
@@ -112,7 +118,6 @@ def main():
             if not golden_asteroids_remaining and not GameState.infinite_map_mode:
                 upgrade_asteroid_spawned = False
                 upgrade_asteroid_timer = 5.0
-
 
 if __name__ == "__main__":
     main()
