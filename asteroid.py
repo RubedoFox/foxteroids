@@ -7,11 +7,21 @@ class Asteroid(CircleShape):
     def __init__(self, x, y, radius):
         super().__init__(x, y, radius)
 
-    def draw(self, screen):
-        pygame.draw.circle(screen, "white", self.position, self.radius, 2)
+        self.position = pygame.Vector2(x, y)
+        self.velocity = pygame.Vector2(random.uniform(-100, 100), random.uniform(-100, 100))
+        self.radius = radius
+
+        self.image = pygame.Surface((radius * 2, radius * 2), pygame.SRCALPHA)
+        pygame.draw.circle(self.image, (150, 150, 150), (radius, radius), radius)
+        self.rect = self.image.get_rect(center=self.position)
 
     def update(self, dt):
         self.position += self.velocity * dt
+        self.rect.center = self.position
+
+    def draw(self, screen, camera_offset):
+        screen_pos = self.position - camera_offset
+        screen.blit(self.image, self.image.get_rect(center=screen_pos))
 
     def split(self):
         self.kill()

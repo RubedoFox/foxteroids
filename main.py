@@ -1,11 +1,15 @@
 import pygame
 from constants import *
+from gamestate import *
 from circleshape import *
 from player import *
 from asteroid import Asteroid
 from asteroidfield import AsteroidField
 from shot import *
 from powerup import *
+from powerupobject import *
+from powerupfield import *
+from upgradeobject import *
 
 
 def main():
@@ -17,18 +21,26 @@ def main():
     drawable = pygame.sprite.Group()
     asteroids = pygame.sprite.Group()
     shots = pygame.sprite.Group()
+    powerups = pygame.sprite.Group()
+    upgrades = pygame.sprite.Group()
 
     for shot in shots:
         all_sprites.add(shot)
     
     Asteroid.containers = (asteroids, updatable, drawable)
     Shot.containers = (shots, updatable, drawable)
+    PowerUpObject.containers = (powerups, drawable, updatable)
+    UpgradeObject.containers = (upgrades, updatable, drawable)
     AsteroidField.containers = updatable
+    PowerUpField.containers = updatable
     asteroid_field = AsteroidField()
+    powerup_field = PowerUpField()
 
     Player.containers = (updatable, drawable)
 
     player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+    PowerUpObject.player = player
+    UpgradeObject.player = player
 
     dt = 0
 
@@ -52,12 +64,23 @@ def main():
                     shot.kill()
                     asteroid.split()
 
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_l:
+                    UpgradeObject.player = player
+                    upgrade = UpgradeObject(player.position + pygame.Vector2(50, 50), "infinite_map")
+
         screen.fill("black")
 
-        for obj in drawable:
-            obj.draw(screen)
+        if GameState.infinite_map_mode:
+            camera_offset = player.position - pygame.Vector2(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+        else:
+            camera_offset = pygame.Vector2(0, 0)
 
-        player.draw_powerup_ui(screen)
+        for obj in drawable:
+            obj.draw(screen, camera_offset)
+
+        player.draw_powerup_ui(screen)  
 
         pygame.display.flip()
 

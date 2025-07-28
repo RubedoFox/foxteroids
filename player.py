@@ -1,6 +1,7 @@
 import pygame
 import random
 from constants import *
+from gamestate import *
 from circleshape import CircleShape
 from shot import Shot
 from powerup import *
@@ -65,9 +66,15 @@ class Player(CircleShape):
             
             self.position = pygame.Vector2(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
 
-    def draw(self, screen):
-        pygame.draw.polygon(screen, self.color, self.triangle(), 0)
-        pygame.draw.polygon(screen, "white", self.triangle(), 2)
+    def draw(self, screen, camera_offset):
+        if GameState.infinite_map_mode:
+            screen_pos = pygame.Vector2(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+        else: 
+            screen_pos = self.position - camera_offset
+        
+        pygame.draw.polygon(screen, self.color, self.triangle(screen_pos))
+        pygame.draw.polygon(screen, (255, 255, 255), self.triangle(screen_pos), 2)
+
         if self.grace > 0:
             pygame.draw.circle(screen, (255, 255, 255), self.position, self.radius + 5, 2)
 
@@ -89,12 +96,12 @@ class Player(CircleShape):
                     pygame.draw.circle(screen, (100, 100, 100), (x, y), dot_radius, width=1)
                 
 
-    def triangle(self):
+    def triangle(self, center):
         forward = pygame.Vector2(0, 1).rotate(self.rotation)
         right = pygame.Vector2(0, 1).rotate(self.rotation + 90) * self.radius / 1.5
-        a = self.position + forward * self.radius
-        b = self.position - forward * self.radius - right
-        c = self.position - forward * self.radius + right
+        a = center + forward * self.radius
+        b = center - forward * self.radius - right
+        c = center - forward * self.radius + right
         return [a, b, c]
     
     def update(self, dt):
