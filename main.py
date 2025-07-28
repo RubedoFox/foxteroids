@@ -8,9 +8,9 @@ from asteroidfield import AsteroidField
 from shot import *
 from powerup import *
 from powerupobject import *
-from powerupfield import *
 from upgradeobject import *
 from upgradeasteroid import *
+from extralifeobject import *
 
 
 def main():
@@ -27,6 +27,7 @@ def main():
     shots = pygame.sprite.Group()
     powerups = pygame.sprite.Group()
     upgrades = pygame.sprite.Group()
+    extra_lives = pygame.sprite.Group()
 
     for shot in shots:
         all_sprites.add(shot)
@@ -36,9 +37,9 @@ def main():
     PowerUpObject.containers = (powerups, drawable, updatable)
     UpgradeObject.containers = (upgrades, updatable, drawable)
     AsteroidField.containers = updatable
-    PowerUpField.containers = updatable
+    ExtraLifeObject.containers = (extra_lives, drawable, updatable)
+
     asteroid_field = AsteroidField()
-    powerup_field = PowerUpField()
 
     Player.containers = (updatable, drawable)
 
@@ -69,6 +70,12 @@ def main():
                     shot.kill()
                     asteroid.split()
 
+        for life in extra_lives:
+            if player.collides_with(life):
+                if player.lives < 3:
+                    player.lives += 1
+                life.kill()
+
         screen.fill("black")
 
         if GameState.infinite_map_mode:
@@ -87,7 +94,6 @@ def main():
         # limit the framerate to 60 FPS
         dt = clock.tick(60) / 1000
 
-                # Golden asteroid logic (respawn until collected)
         if not GameState.infinite_map_mode:
             upgrade_asteroid_timer -= dt
 
@@ -95,9 +101,8 @@ def main():
                 from upgradeasteroid import UpgradeAsteroid
                 iwasteroid = UpgradeAsteroid(side=random.choice(["left", "right"]))
                 upgrade_asteroid_spawned = True
-                upgrade_asteroid_timer = 0.0  # Don't count down again until reset
+                upgrade_asteroid_timer = 0.0
 
-        # If golden asteroid was destroyed but upgrade not yet collected, allow respawn
         if upgrade_asteroid_spawned:
             golden_asteroids_remaining = any(
                 isinstance(a, Asteroid) and hasattr(a, "is_upgrade") and a.is_upgrade
@@ -105,7 +110,6 @@ def main():
             )
 
             if not golden_asteroids_remaining and not GameState.infinite_map_mode:
-                # Respawn delay (e.g., 5 seconds)
                 upgrade_asteroid_spawned = False
                 upgrade_asteroid_timer = 5.0
 

@@ -2,6 +2,11 @@ import pygame
 import random
 from circleshape import CircleShape
 from constants import *
+from powerup import *
+from powerupobject import PowerUpObject
+from extralifeobject import ExtraLifeObject
+from gamestate import GameState
+from player import *
 
 class Asteroid(CircleShape, pygame.sprite.Sprite):
     def __init__(self, x, y, radius):
@@ -27,6 +32,7 @@ class Asteroid(CircleShape, pygame.sprite.Sprite):
     def split(self):
         self.kill()
         if self.radius <= ASTEROID_MIN_RADIUS:
+            self.try_spawn_drop()
             return
         
         random_angle = random.uniform(20, 50)
@@ -41,5 +47,21 @@ class Asteroid(CircleShape, pygame.sprite.Sprite):
         
         a2 = Asteroid(self.position.x, self.position.y, new_radius)
         a2.velocity = vector2 * 1.2
+
+        self.try_spawn_drop()
+
+    def try_spawn_drop(self):
+        if random.randint (1, 3) != 1:
+            return
+        
+        player = GameState.player
+        if player is None:
+            return
+        
+        if player.lives < 3 and random.random() < 0.5:
+            ExtraLifeObject(self.position)
+        else:
+            type_name = random.choice(POWERUP_ORDER)
+            PowerUpObject(self.position, type_name)
 
 
