@@ -3,9 +3,10 @@ import random
 from circleshape import CircleShape
 from constants import *
 
-class Asteroid(CircleShape):
+class Asteroid(CircleShape, pygame.sprite.Sprite):
     def __init__(self, x, y, radius):
-        super().__init__(x, y, radius)
+        pygame.sprite.Sprite.__init__(self, self.containers)
+        CircleShape.__init__(self, x, y, radius)
 
         self.position = pygame.Vector2(x, y)
         self.velocity = pygame.Vector2(random.uniform(-100, 100), random.uniform(-100, 100))
@@ -34,9 +35,11 @@ class Asteroid(CircleShape):
         vector2 = self.velocity.rotate(-random_angle)
 
         new_radius = self.radius - ASTEROID_MIN_RADIUS
-        asteroid = Asteroid(self.position.x, self.position.y, new_radius)
-        asteroid.velocity = vector1 * 1.2
-        asteroid = Asteroid(self.position.x, self.position.y, new_radius)
-        asteroid.velocity = vector2 * 1.2
+
+        a1 = Asteroid(self.position.x, self.position.y, new_radius)
+        a1.velocity = vector1 * 1.2
+        
+        a2 = Asteroid(self.position.x, self.position.y, new_radius)
+        a2.velocity = vector2 * 1.2
 
 

@@ -41,6 +41,7 @@ def main():
     player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
     PowerUpObject.player = player
     UpgradeObject.player = player
+    GameState.player = player
 
     dt = 0
 
