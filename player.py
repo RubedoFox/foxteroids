@@ -76,7 +76,7 @@ class Player(CircleShape):
         pygame.draw.polygon(screen, (255, 255, 255), self.triangle(screen_pos), 2)
 
         if self.grace > 0:
-            pygame.draw.circle(screen, (255, 255, 255), self.position, self.radius + 5, 2)
+            pygame.draw.circle(screen, (255, 255, 255), screen_pos, self.radius + 5, 2)
 
     def draw_powerup_ui(self, screen):
         dot_radius = 6
@@ -94,7 +94,31 @@ class Player(CircleShape):
                     pygame.draw.circle(screen, color, (x, y), dot_radius)
                 else:
                     pygame.draw.circle(screen, (100, 100, 100), (x, y), dot_radius, width=1)
-                
+
+    def draw_lives_ui(self, screen):
+        triangle_size = 12
+        spacing = 24
+        margin_x = 40
+        margin_y = 10
+
+        for i in range(3):
+            x_offset = margin_x + i * spacing
+            y_offset = margin_y + triangle_size
+
+            if i < self.lives:
+                color = (255, 255, 255) #White
+            else:
+                color = (75, 75, 75) #Gray
+
+            forward = pygame.Vector2(0, -1)
+            right = pygame.Vector2(1, 0)
+
+            a = pygame.Vector2(x_offset, y_offset) + forward * triangle_size
+            b = pygame.Vector2(x_offset, y_offset) - forward * triangle_size - right * triangle_size * 0.75
+            c = pygame.Vector2(x_offset, y_offset) - forward * triangle_size + right * triangle_size * 0.75
+
+            pygame.draw.polygon(screen, color, [a, b, c])
+
 
     def triangle(self, center):
         forward = pygame.Vector2(0, 1).rotate(self.rotation)
@@ -118,8 +142,6 @@ class Player(CircleShape):
             self.move(dt)
         if keys[pygame.K_SPACE]:
             self.shoot()
-        if keys[pygame.K_l]:
-            GameState.infinite_map_mode = True #for testing
         if keys[pygame.K_i] and self.powerup_inventory["invulnerability"] > 0 and not self.has_invulnerability:
             self.has_invulnerability = True
             self.powerup_inventory["invulnerability"] -= 1

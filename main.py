@@ -10,12 +10,16 @@ from powerup import *
 from powerupobject import *
 from powerupfield import *
 from upgradeobject import *
+from upgradeasteroid import *
 
 
 def main():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     clock = pygame.time.Clock()
+
+    upgrade_asteroid_timer = 5.0
+    upgrade_asteroid_spawned = False
 
     updatable = pygame.sprite.Group()
     drawable = pygame.sprite.Group()
@@ -75,12 +79,22 @@ def main():
         for obj in drawable:
             obj.draw(screen, camera_offset)
 
+        player.draw_lives_ui(screen)
         player.draw_powerup_ui(screen)  
 
         pygame.display.flip()
 
         # limit the framerate to 60 FPS
         dt = clock.tick(60) / 1000
+
+        if not GameState.infinite_map_mode:
+          if not upgrade_asteroid_spawned:
+            upgrade_asteroid_timer -= dt
+            if upgrade_asteroid_timer <= 0:
+                from upgradeasteroid import UpgradeAsteroid
+                iwasteroid = UpgradeAsteroid(side=random.choice(["left", "right"]))
+                upgrade_asteroid_spawned = True
+                upgrade_asteroid_timer = 20.0  # wait before retry if missed
 
 
 if __name__ == "__main__":
