@@ -87,14 +87,27 @@ def main():
         # limit the framerate to 60 FPS
         dt = clock.tick(60) / 1000
 
+                # Golden asteroid logic (respawn until collected)
         if not GameState.infinite_map_mode:
-          if not upgrade_asteroid_spawned:
             upgrade_asteroid_timer -= dt
-            if upgrade_asteroid_timer <= 0:
+
+            if upgrade_asteroid_timer <= 0 and not upgrade_asteroid_spawned:
                 from upgradeasteroid import UpgradeAsteroid
                 iwasteroid = UpgradeAsteroid(side=random.choice(["left", "right"]))
                 upgrade_asteroid_spawned = True
-                upgrade_asteroid_timer = 20.0  # wait before retry if missed
+                upgrade_asteroid_timer = 0.0  # Don't count down again until reset
+
+        # If golden asteroid was destroyed but upgrade not yet collected, allow respawn
+        if upgrade_asteroid_spawned:
+            golden_asteroids_remaining = any(
+                isinstance(a, Asteroid) and hasattr(a, "is_upgrade") and a.is_upgrade
+                for a in asteroids
+            )
+
+            if not golden_asteroids_remaining and not GameState.infinite_map_mode:
+                # Respawn delay (e.g., 5 seconds)
+                upgrade_asteroid_spawned = False
+                upgrade_asteroid_timer = 5.0
 
 
 if __name__ == "__main__":

@@ -15,6 +15,8 @@ class UpgradeAsteroid(Asteroid):
 
         super().__init__(x, y, 20)
 
+        self.is_upgrade = True
+        
         self.velocity = self.direction * 300
         self.image.fill((0, 0, 0, 0))
         pygame.draw.circle(self.image, (255, 215, 0), (self.radius, self.radius), self.radius)
