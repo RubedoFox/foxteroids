@@ -6,6 +6,7 @@ from player import *
 
 class PowerUpObject(pygame.sprite.Sprite):
     player = None
+    containers = ()
     
     def __init__(self, position, type_name):
         super().__init__(self.containers)

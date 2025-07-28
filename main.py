@@ -65,12 +65,6 @@ def main():
                     shot.kill()
                     asteroid.split()
 
-        for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_l:
-                    UpgradeObject.player = player
-                    upgrade = UpgradeObject(player.position + pygame.Vector2(50, 50), "infinite_map")
-
         screen.fill("black")
 
         if GameState.infinite_map_mode:

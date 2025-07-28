@@ -1,12 +1,15 @@
 import pygame
 from circleshape import CircleShape
-from constants import SHOT_RADIUS
+from constants import *
 
 class Shot(CircleShape, pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    containers = ()
+    
+    def __init__(self, x, y, player):
         CircleShape.__init__(self, x, y, SHOT_RADIUS)
-        pygame.sprite.Sprite.__init__(self)
+        pygame.sprite.Sprite.__init__(self, self.containers)
 
+        self.player = player
         self.velocity = pygame.Vector2(0, 0)
 
         self.image = pygame.Surface((SHOT_RADIUS * 2, SHOT_RADIUS * 2), pygame.SRCALPHA)
@@ -16,6 +19,9 @@ class Shot(CircleShape, pygame.sprite.Sprite):
     def update(self, dt):
         self.position += self.velocity * dt
         self.rect.center = self.position
+
+        if self.player and self.position.distance_to(self.player.position) > SHOT_MAX_DIST:
+            self.kill()
 
     def draw(self, screen, camera_offset):
         screen_pos = self.position - camera_offset

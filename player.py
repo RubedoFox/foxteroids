@@ -118,6 +118,8 @@ class Player(CircleShape):
             self.move(dt)
         if keys[pygame.K_SPACE]:
             self.shoot()
+        if keys[pygame.K_l]:
+            GameState.infinite_map_mode = True #for testing
         if keys[pygame.K_i] and self.powerup_inventory["invulnerability"] > 0 and not self.has_invulnerability:
             self.has_invulnerability = True
             self.powerup_inventory["invulnerability"] -= 1
@@ -170,11 +172,11 @@ class Player(CircleShape):
             angles = [-10, 0, 10]
             for offset, angle in zip(offsets, angles):
                 pos = self.position + pygame.Vector2(offset, 0).rotate(self.rotation)
-                shot = Shot(pos.x, pos.y)
+                shot = Shot(pos.x, pos.y, self)
                 shot.velocity = pygame.Vector2(0, 1).rotate(self.rotation + angle) * PLAYER_SHOOT_SPEED
                 shots.append(shot)
         else:
-            shot = Shot(self.position.x, self.position.y)
+            shot = Shot(self.position.x, self.position.y, self)
             shot.velocity = pygame.Vector2(0, 1).rotate(self.rotation) * PLAYER_SHOOT_SPEED
             shots.append(shot)
 
