@@ -15,23 +15,23 @@ POWERUP_COLORS = {
 
 POWERUP_ORDER = ["invulnerability", "acceleration", "multishot"]
 
-#Player derived from CircleShape
+# Player derived from CircleShape
 class Player(CircleShape):
     def __init__(self, x, y):
         super().__init__(x, y, PLAYER_RADIUS)
-        
+
         self.color = (0, 0, 0)
 
         self.rotation = 0
         self.fire_time = 0
-        
+
         self.lives = 3
         self.is_alive = True
 
         self.has_grace = False
         self.grace = 0.0
         self.grace_time = 1.5
-        
+
         self.powerup_durations = {
             "invulnerability": 0,
             "acceleration": 0,
@@ -49,30 +49,30 @@ class Player(CircleShape):
         self.has_invulnerability = False
         self.has_acceleration = False
         self.has_multishot = False
-        
+
         self.current_powerup = None
-    
+
     def lose_life(self):
         if self.has_invulnerability or self.has_grace:
             return
-        
+
         self.lives -= 1
 
         if self.lives <= 0:
             self.is_alive = False
-        
         else:
             self.has_grace = True
             self.grace = self.grace_time
-            
-            self.position = pygame.Vector2(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+
+            screen = pygame.display.get_surface()
+            self.position = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
 
     def draw(self, screen, camera_offset):
         if GameState.infinite_map_mode:
-            screen_pos = pygame.Vector2(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
-        else: 
+            screen_pos = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
+        else:
             screen_pos = self.position - camera_offset
-        
+
         pygame.draw.polygon(screen, self.color, self.triangle(screen_pos))
         pygame.draw.polygon(screen, (255, 255, 255), self.triangle(screen_pos), 2)
 
@@ -88,7 +88,7 @@ class Player(CircleShape):
             count = self.powerup_inventory[p_type]
             color = POWERUP_COLORS[p_type]
             for i in range(self.powerup_max):
-                x = SCREEN_WIDTH - margin - (dot_radius * 2 + 4) * (i + 1)
+                x = screen.get_width() - margin - (dot_radius * 2 + 4) * (i + 1)
                 y = margin + row * (dot_radius * 2 + 10)
 
                 if i < count:
@@ -107,9 +107,9 @@ class Player(CircleShape):
             y_offset = margin_y + triangle_size
 
             if i < self.lives:
-                color = (255, 255, 255) #White
+                color = (255, 255, 255)  # White
             else:
-                color = (75, 75, 75) #Gray
+                color = (75, 75, 75)  # Gray
 
             forward = pygame.Vector2(0, -1)
             right = pygame.Vector2(1, 0)
@@ -120,7 +120,6 @@ class Player(CircleShape):
 
             pygame.draw.polygon(screen, color, [a, b, c])
 
-
     def triangle(self, center):
         forward = pygame.Vector2(0, 1).rotate(self.rotation)
         right = pygame.Vector2(0, 1).rotate(self.rotation + 90) * self.radius / 1.5
@@ -128,7 +127,7 @@ class Player(CircleShape):
         b = center - forward * self.radius - right
         c = center - forward * self.radius + right
         return [a, b, c]
-    
+
     def update(self, dt):
         self.fire_time -= dt
         keys = pygame.key.get_pressed()
@@ -176,7 +175,7 @@ class Player(CircleShape):
                         self.has_multishot = False
 
         self.update_powerup_color()
- 
+
     def update_powerup_color(self):
         r, g, b = 0, 0, 0
         if self.has_invulnerability:
@@ -194,7 +193,7 @@ class Player(CircleShape):
         shots = []
 
         speed_multiplier = 2 if self.has_acceleration else 1
-        
+
         if self.has_multishot:
             offsets = [20, 0, -20]
             angles = [-10, 0, 10]
@@ -215,7 +214,7 @@ class Player(CircleShape):
 
     def rotate(self, dt):
         self.rotation += PLAYER_TURN_SPEED * dt
-    
+
     def move(self, dt):
         forward = pygame.Vector2(0, 1).rotate(self.rotation)
         if self.has_acceleration:

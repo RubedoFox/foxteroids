@@ -20,20 +20,19 @@ def main():
             break
 
 def run_game():
+    paused = False
+    selected_option = 0
+
     pygame.init()
     pygame.font.init()
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+
+    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
     clock = pygame.time.Clock()
     game_stats = GameStats()
 
+    width, height = screen.get_width(), screen.get_height()
+
     start_time = time.time()
-    upgrades_acquired = 0
-    asteroids_destroyed = 0
-    powerup_usage = {
-        "invulnerability": 0,
-        "acceleration": 0,
-        "multishot": 0,
-    }
 
     upgrade_asteroid_timer = 5.0
     upgrade_asteroid_spawned = False
@@ -46,9 +45,6 @@ def run_game():
     upgrades = pygame.sprite.Group()
     extra_lives = pygame.sprite.Group()
 
-    for shot in shots:
-        all_sprites.add(shot)
-    
     Asteroid.containers = (asteroids, updatable, drawable)
     Shot.containers = (shots, updatable, drawable)
     PowerUpObject.containers = (powerups, drawable, updatable)
@@ -57,10 +53,9 @@ def run_game():
     ExtraLifeObject.containers = (extra_lives, drawable, updatable)
 
     asteroid_field = AsteroidField()
-
     Player.containers = (updatable, drawable)
 
-    player = Player(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+    player = Player(width / 2, height / 2)
     player.game_stats = game_stats
     PowerUpObject.player = player
     UpgradeObject.player = player
@@ -74,51 +69,76 @@ def run_game():
                 pygame.quit()
                 return True
 
-        updatable.update(dt)
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    paused = not paused
+                    selected_option = 0  # Reset selection
 
-        if not player.is_alive:
-            run_time = time.time() - start_time
-            show_game_over(screen, game_stats, run_time)
-            return False
+                elif paused:
+                    if event.key in (pygame.K_UP, pygame.K_DOWN):
+                        selected_option = 1 - selected_option  # Toggle between 0 and 1
+                    elif event.key == pygame.K_RETURN:
+                        if selected_option == 0:
+                            paused = False
+                        else:
+                            pygame.quit()
+                            exit()
 
-        for asteroid in asteroids:
-            if asteroid.collides_with(player):
-                asteroid.kill()
-                player.lose_life()
+        if not paused:
+            updatable.update(dt)
 
-            for shot in shots:
-                if asteroid.collides_with(shot):
-                    shot.kill()
-                    asteroid.split()
-                    game_stats.increment_asteroid_destroyed()
+            if not player.is_alive:
+                run_time = time.time() - start_time
+                show_game_over(screen, game_stats, run_time)
+                return False
 
-        for life in extra_lives:
-            if player.collides_with(life):
-                if player.lives < 3:
-                    player.lives += 1
-                life.kill()
+            for asteroid in asteroids:
+                if asteroid.collides_with(player):
+                    asteroid.kill()
+                    player.lose_life()
 
-        screen.fill("black")
+                for shot in shots:
+                    if asteroid.collides_with(shot):
+                        shot.kill()
+                        asteroid.split()
+                        game_stats.increment_asteroid_destroyed()
 
-        if GameState.infinite_map_mode:
-            camera_offset = player.position - pygame.Vector2(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2)
+            for life in extra_lives:
+                if player.collides_with(life):
+                    if player.lives < 3:
+                        player.lives += 1
+                    life.kill()
+
+            screen.fill("black")
+
+            camera_offset = (player.position - pygame.Vector2(width / 2, height / 2)
+                             if GameState.infinite_map_mode else pygame.Vector2(0, 0))
+
+            for obj in drawable:
+                obj.draw(screen, camera_offset)
+
+            player.draw_lives_ui(screen)
+            player.draw_powerup_ui(screen)
+
         else:
-            camera_offset = pygame.Vector2(0, 0)
+            # Draw pause screen
+            screen.fill("black")
+            font = pygame.font.SysFont(None, 64)
 
-        for obj in drawable:
-            obj.draw(screen, camera_offset)
+            title_text = font.render("Paused", True, (255, 255, 255))
+            screen.blit(title_text, (width // 2 - title_text.get_width() // 2, height // 3))
 
-        player.draw_lives_ui(screen)
-        player.draw_powerup_ui(screen)  
+            options = ["Continue", "Exit"]
+            for i, option in enumerate(options):
+                color = (255, 255, 0) if i == selected_option else (200, 200, 200)
+                opt_text = font.render(option, True, color)
+                screen.blit(opt_text, (width // 2 - opt_text.get_width() // 2, height // 2 + i * 60))
 
         pygame.display.flip()
-
-        # limit the framerate to 60 FPS
         dt = clock.tick(60) / 1000
 
         if not GameState.infinite_map_mode:
             upgrade_asteroid_timer -= dt
-
             if upgrade_asteroid_timer <= 0 and not upgrade_asteroid_spawned:
                 from upgradeasteroid import UpgradeAsteroid
                 iwasteroid = UpgradeAsteroid(side=random.choice(["left", "right"]))
@@ -127,13 +147,13 @@ def run_game():
 
         if upgrade_asteroid_spawned:
             golden_asteroids_remaining = any(
-                isinstance(a, Asteroid) and hasattr(a, "is_upgrade") and a.is_upgrade
+                isinstance(a, Asteroid) and getattr(a, "is_upgrade", False)
                 for a in asteroids
             )
-
             if not golden_asteroids_remaining and not GameState.infinite_map_mode:
                 upgrade_asteroid_spawned = False
                 upgrade_asteroid_timer = 5.0
+
 
 def show_game_over(screen, game_stats, run_time):
     pygame.font.init()
@@ -141,24 +161,24 @@ def show_game_over(screen, game_stats, run_time):
     small_font = pygame.font.SysFont(None, 36)
 
     game_over_text = big_font.render("GAME OVER", True, (255, 0, 0))
-    game_over_rect = game_over_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4))
+    game_over_rect = game_over_text.get_rect(center=(width // 2, height // 4))
 
     runtime_text = small_font.render(f"Run Duration: {run_time:.1f} seconds", True, (255, 255, 255))
-    runtime_rect = runtime_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4 + 60))
+    runtime_rect = runtime_text.get_rect(center=(width // 2, height // 4 + 60))
 
     upgrades_text = small_font.render(f"Upgrades Acquired: {game_stats.upgrades_acquired}", True, (255, 255, 255))
-    upgrades_rect = upgrades_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4 + 100))
+    upgrades_rect = upgrades_text.get_rect(center=(width // 2, height // 4 + 100))
 
     asteroids_text = small_font.render(f"Asteroids Destroyed: {game_stats.asteroids_destroyed}", True, (255, 255, 255))
-    asteroids_rect = asteroids_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 4 + 140))
+    asteroids_rect = asteroids_text.get_rect(center=(width // 2, height // 4 + 140))
 
     usage_lines = []
-    y_offset = SCREEN_HEIGHT // 4 + 180
+    y_offset = height // 4 + 180
     for p, count in game_stats.powerup_usage.items():
         usage_lines.append(small_font.render(f"{p.title()} Used: {count}", True, (255, 255, 255)))
 
     prompt_text = small_font.render("Press SPACE to restart", True, (255, 255, 255))
-    prompt_rect = prompt_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT * 3 // 4))
+    prompt_rect = prompt_text.get_rect(center=(width // 2, height * 3 // 4))
 
     while True:
         for event in pygame.event.get():
@@ -176,7 +196,7 @@ def show_game_over(screen, game_stats, run_time):
         screen.blit(asteroids_text, asteroids_rect)
 
         for i, line in enumerate(usage_lines):
-            screen.blit(line, (SCREEN_WIDTH // 2 - line.get_width() // 2, y_offset + i * 30))
+            screen.blit(line, (width // 2 - line.get_width() // 2, y_offset + i * 30))
 
         screen.blit(prompt_text, prompt_rect)
         pygame.display.flip()
