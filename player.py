@@ -5,6 +5,7 @@ from gamestate import *
 from circleshape import CircleShape
 from shot import Shot
 from powerup import *
+from gamestats import *
 
 POWERUP_COLORS = {
     "invulnerability": (255, 0, 0),   # Red
@@ -50,7 +51,7 @@ class Player(CircleShape):
         self.has_multishot = False
         
         self.current_powerup = None
-
+    
     def lose_life(self):
         if self.has_invulnerability or self.has_grace:
             return
@@ -146,14 +147,17 @@ class Player(CircleShape):
             self.has_invulnerability = True
             self.powerup_inventory["invulnerability"] -= 1
             self.powerup_durations["invulnerability"] = 10.0
+            self.game_stats.increment_powerup_use("invulnerability")
         if keys[pygame.K_o] and self.powerup_inventory["acceleration"] > 0 and not self.has_acceleration:
             self.has_acceleration = True
             self.powerup_inventory["acceleration"] -= 1
             self.powerup_durations["acceleration"] = 10.0
+            self.game_stats.increment_powerup_use("acceleration")
         if keys[pygame.K_p] and self.powerup_inventory["multishot"] > 0 and not self.has_multishot:
             self.has_multishot = True
             self.powerup_inventory["multishot"] -= 1
             self.powerup_durations["multishot"] = 10.0
+            self.game_stats.increment_powerup_use("multishot")
 
         if self.grace > 0:
             self.grace -= dt
